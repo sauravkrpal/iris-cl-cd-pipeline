@@ -10,10 +10,10 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: "3.8"
 
@@ -27,7 +27,7 @@ jobs:
         echo "No tests yet"
 
     - name: Deploy to Render
-      uses: johnbeynon/render-deploy-action@v1
+      uses: johnbeynon/render-deploy-action@v1.0.8
       with:
         service-id: ${{ secrets.RENDER_SERVICE_ID }}
         api-key: ${{ secrets.RENDER_API_KEY }}
