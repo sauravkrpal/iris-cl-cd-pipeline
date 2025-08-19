@@ -2,9 +2,13 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import joblib
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # go one level up
+data_path = os.path.join(BASE_DIR, 'data', 'iris.csv')
 
 # Load the dataset
-data = pd.read_csv(r'C:\ml-ci-cd-pipeline\data\iris.csv')
+data = pd.read_csv(data_path)
 
 # Preprocess the dataset
 X = data.drop('species', axis=1)
