@@ -1,22 +1,54 @@
-import pickle
+# app.py
+import os
+import json
+import joblib
+import numpy as np
 from flask import Flask, request, jsonify
 
-# Load model
-with open("iris_model.pkl", "rb") as f:
-    model = pickle.load(f)
+# --- Config ---
+MODEL_PATH = os.getenv("MODEL_PATH", "model/iris_model.pkl")  # adjust filename if needed
 
+# --- App ---
 app = Flask(__name__)
 
-@app.route("/")
-def home():
-    return "ML Model Deployment with Flask + Render!"
+# Load once at startup
+try:
+    model = joblib.load(MODEL_PATH)
+except Exception as e:
+    # Fail fast with a helpful message
+    raise RuntimeError(f"Could not load model from {MODEL_PATH}: {e}")
 
-@app.route("/predict", methods=["POST"])
+@app.get("/health")
+def health():
+    return {"status": "ok"}, 200
+
+@app.post("/predict")
 def predict():
-    data = request.get_json()
-    features = data.get("features")  # Expect list of features
-    prediction = model.predict([features])
-    return jsonify({"prediction": prediction.tolist()})
+    """
+    Accepts either:
+    {"input": [[...feature vector...], [...]]}  # 2D list
+    or
+    {"input": [...feature vector...]}           # 1D list
+    """
+    try:
+        payload = request.get_json(force=True)
+        x = payload.get("input")
+        if x is None:
+            return jsonify(error="Missing 'input'"), 400
+
+        # Normalize to 2D array
+        if isinstance(x, list) and (len(x) > 0) and not isinstance(x[0], list):
+            x = [x]
+
+        X = np.array(x, dtype=float)
+        preds = model.predict(X)
+        # If your model returns numpy types, convert to Python
+        preds = preds.tolist()
+        return jsonify(prediction=preds), 200
+
+    except Exception as e:
+        return jsonify(error=str(e)), 500
 
 if __name__ == "__main__":
-    app.run()
+    # Local dev only; Render will run with Gunicorn (see startCommand below)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
